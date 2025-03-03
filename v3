@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Feeds</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+        }
+        .camera-feed {
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Camera Feeds</h1>
+    <div>
+        <h2>Camera 1</h2>
+        <img id="camera-feed-1" src="http://aveiashq.mycrestron.com:22222/snap.jpeg?rand=0" alt="Camera Feed 1" class="camera-feed">
+    </div>
+    <div>
+        <h2>Camera 2</h2>
+        <img id="camera-feed-2" src="http://aveiashq.mycrestron.com:22226/snap.jpeg?rand=0" alt="Camera Feed 2" class="camera-feed">
+    </div>
+    <div>
+        <h2>Camera 3</h2>
+        <img id="camera-feed-3" src="http://aveiashq.mycrestron.com:22225/snap.jpeg?rand=0" alt="Camera Feed 3" class="camera-feed">
+    </div>
+    <script>
+        function reloadImage(cameraId, url) {
+            var img = document.getElementById(cameraId);
+            var timestamp = new Date().getTime();
+            img.src = url + "?rand=" + timestamp;
+        }
+
+        setInterval(function() {
+            reloadImage('camera-feed-1', 'http://aveiashq.mycrestron.com:22222/snap.jpeg');
+            reloadImage('camera-feed-2', 'http://aveiashq.mycrestron.com:22226/snap.jpeg');
+            reloadImage('camera-feed-3', 'http://aveiashq.mycrestron.com:22225/snap.jpeg');
+        }, 1000);  // Reload every second
+    </script>
+</body>
+</html>

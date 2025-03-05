@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera 1 Feed</title>
+    <style>
+        /* Fullscreen styles for the feed */
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+        }
+        .camera-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        /* FPS Counter styles */
+        #fps-counter {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+            text-shadow: 1px 1px 3px black;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <!-- FPS counter -->
+    <div id="fps-counter">FPS: 15</div>
+
+    <!-- Fullscreen camera feed -->
+    <img id="camera-feed-1" src="http://aveiashq.mycrestron.com:22222/snap.jpeg?rand=0" class="camera-feed" alt="Camera Feed 1">
+
+    <script>
+        let fps = 15; // Set the desired FPS
+        let frameInterval = 1000 / fps; // Interval in milliseconds for 15 FPS
+        const fpsCounter = document.getElementById('fps-counter');
+        const cameraFeed = document.getElementById('camera-feed-1');
+
+        // Function to reload the image and track FPS
+        function reloadImage() {
+            const timestamp = new Date().getTime();
+            cameraFeed.src = `http://aveiashq.mycrestron.com:22222/snap.jpeg?rand=${timestamp}`;
+        }
+
+        // Function to update the FPS counter
+        function updateFPS() {
+            fpsCounter.textContent = `FPS: ${fps}`;
+        }
+
+        // Refresh the image at the desired FPS
+        setInterval(() => {
+            reloadImage();
+            updateFPS();
+        }, frameInterval);
+    </script>
+</body>
+</html>

@@ -12,15 +12,12 @@
             overflow: hidden;
             width: 100%;
             height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             background-color: #000;
         }
         .camera-feed {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
         }
         
         /* FPS Counter styles */
@@ -37,19 +34,19 @@
     </style>
 </head>
 <body>
-    <!-- FPS counter -->
+    <!-- FPS Counter -->
     <div id="fps-counter">FPS: 15</div>
 
-    <!-- Fullscreen camera feed -->
+    <!-- Fullscreen Camera Feed -->
     <img id="camera-feed-1" src="http://aveiashq.mycrestron.com:22222/snap.jpeg?rand=0" class="camera-feed" alt="Camera Feed 1">
 
     <script>
-        let fps = 15; // Set the desired FPS
-        let frameInterval = 1000 / fps; // Interval in milliseconds for 15 FPS
+        let fps = 15; // Desired FPS
+        const frameInterval = 1000 / fps; // Interval in milliseconds for 15 FPS
         const fpsCounter = document.getElementById('fps-counter');
         const cameraFeed = document.getElementById('camera-feed-1');
 
-        // Function to reload the image and track FPS
+        // Function to reload the camera feed image
         function reloadImage() {
             const timestamp = new Date().getTime();
             cameraFeed.src = `http://aveiashq.mycrestron.com:22222/snap.jpeg?rand=${timestamp}`;
@@ -60,7 +57,7 @@
             fpsCounter.textContent = `FPS: ${fps}`;
         }
 
-        // Refresh the image at the desired FPS
+        // Main loop to refresh the image and update FPS
         setInterval(() => {
             reloadImage();
             updateFPS();

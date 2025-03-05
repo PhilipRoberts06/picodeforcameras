@@ -5,36 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera 1 Feed</title>
     <style>
-        /* Fullscreen and responsive styles */
+        /* Ensure the feed fits naturally on the screen */
         body, html {
             margin: 0;
             padding: 0;
             overflow: hidden;
             width: 100%;
             height: 100%;
-            background-color: #000; /* Black background */
             display: flex;
             justify-content: center;
             align-items: center;
+            background-color: #000; /* Black background for fullscreen effect */
         }
 
         .camera-feed {
             /* Display the image at its natural resolution */
-            max-width: 100%;
-            max-height: 100%;
             width: auto;
             height: auto;
+            max-width: 100%; /* Prevent overflow horizontally */
+            max-height: 100%; /* Prevent overflow vertically */
         }
 
-        /* FPS Counter styles */
+        /* Style for the FPS counter */
         #fps-counter {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black background */
             color: white;
             font-size: 12px;
             font-family: Arial, sans-serif;
-            text-shadow: 1px 1px 3px black;
+            padding: 5px 10px;
+            border-radius: 5px;
+            text-shadow: 1px 1px 2px black; /* Black stroke for visibility */
             z-index: 10;
         }
     </style>
@@ -43,7 +46,7 @@
     <!-- FPS Counter -->
     <div id="fps-counter">FPS: 15</div>
 
-    <!-- Fullscreen camera feed -->
+    <!-- Fullscreen Camera Feed -->
     <img id="camera-feed-1" src="http://aveiashq.mycrestron.com:22222/snap.jpeg?rand=0" class="camera-feed" alt="Camera Feed 1">
 
     <script>
@@ -71,4 +74,3 @@
     </script>
 </body>
 </html>
-

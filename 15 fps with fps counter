@@ -5,39 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera 1 Feed</title>
     <style>
-        /* Ensure the feed fits naturally on the screen */
+        /* Fullscreen feed styles */
         body, html {
             margin: 0;
             padding: 0;
             overflow: hidden;
             width: 100%;
             height: 100%;
+            background-color: #000; /* Black background */
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #000; /* Black background for fullscreen effect */
         }
 
         .camera-feed {
-            /* Display the image at its natural resolution */
-            width: auto;
-            height: auto;
-            max-width: 100%; /* Prevent overflow horizontally */
-            max-height: 100%; /* Prevent overflow vertically */
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures the image fills the screen */
         }
 
-        /* Style for the FPS counter */
+        /* FPS Counter styles */
         #fps-counter {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black background */
+            top: 10px;
+            right: 10px;
             color: white;
-            font-size: 12px;
+            font-size: 14px;
             font-family: Arial, sans-serif;
-            padding: 5px 10px;
-            border-radius: 5px;
-            text-shadow: 1px 1px 2px black; /* Black stroke for visibility */
+            text-shadow: 2px 2px 4px black;
             z-index: 10;
         }
     </style>
@@ -50,7 +45,7 @@
     <img id="camera-feed-1" src="http://aveiashq.mycrestron.com:22222/snap.jpeg?rand=0" class="camera-feed" alt="Camera Feed 1">
 
     <script>
-        let fps = 15; // Desired FPS
+        const fps = 15; // Desired FPS
         const frameInterval = 1000 / fps; // Interval in milliseconds for 15 FPS
         const fpsCounter = document.getElementById('fps-counter');
         const cameraFeed = document.getElementById('camera-feed-1');

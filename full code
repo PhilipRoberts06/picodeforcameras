@@ -1,0 +1,83 @@
+python3 --version
+
+python3 -m venv flask_env
+
+source flask_env/bin/activate
+
+pip install flask
+
+pip install requests
+
+source flask_env/bin/activate
+
+mkdir ~/ssl_cert
+
+cd ~/ssl_cert
+
+openssl req -x509 -nodes -days 365000 -newkey rsa:2048 -keyout privkey.pem -out cert.pem
+(US)(State)(City)
+
+from flask import Flask, send_file, request, abort
+import requests
+import io
+
+app = Flask(__name__)
+
+from flask import Flask, send_file, request, abort
+import requests
+import io
+
+app = Flask(__name__)
+
+from flask import Flask, send_file, request, abort
+import requests
+import io
+
+app = Flask(__name__)
+
+# Load client keys and their corresponding feeds from a file
+def load_client_feeds():
+    client_feeds = {"http://aveiashq.mycrestron.com:22226/snap.jpeg"}
+    try:
+        with open("client_keys.txt", "r") as file:
+            for line in file:
+                key, feed_url = line.strip().split(",")
+                client_feeds[key] = feed_url
+    except FileNotFoundError:
+        pass  # If file doesn't exist, return an empty dictionary
+    return client_feeds
+
+@app.route('/snap.jpeg', methods=['GET'])
+def get_image():
+    # Get the 'auth_key' parameter from the request
+    auth_key = request.args.get('auth_key')
+
+    # Load the client feeds dynamically
+    client_feeds = load_client_feeds()
+
+    # Verify if the provided key is valid
+    if auth_key not in client_feeds:
+        abort(403)  # Forbidden: Invalid or missing key
+
+    # Fetch the feed URL for the authenticated client
+    feed_url = client_feeds[auth_key]
+
+    try:
+        # Fetch the latest image from the client's specific feed
+        response = requests.get(feed_url, stream=True)
+        response.raise_for_status()
+
+        # Stream the image to the client without saving it
+        return send_file(
+            io.BytesIO(response.content),
+            mimetype='image/jpeg',
+            as_attachment=False
+        )
+    except requests.exceptions.RequestException as e:
+        return f"Error fetching image: {e}", 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, ssl_context=(
+        "./ssl_cert/cert.pem",  # Path to your self-signed certificate
+        "./ssl_cert/privkey.pem"  # Path to your private key
+    ))

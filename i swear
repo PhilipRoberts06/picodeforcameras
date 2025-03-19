@@ -1,9 +1,9 @@
 from flask import Flask, request, jsonify, Response
-from OpenSSL import SSL
 import requests
 
 app = Flask(__name__)
 
+# Route to forward requests to the local server
 @app.route('/api/<path:path>', methods=['GET', 'POST'])
 def forward_request(path):
     local_server_url = f"http://127.0.0.1:8000/{path}"  # Local server URL
@@ -21,13 +21,14 @@ def forward_request(path):
     else:
         return jsonify(response.json()), response.status_code
 
+# Health-check endpoint
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "running"}), 200
 
 if __name__ == '__main__':
-    context = SSL.Context(SSL.SSLv23_METHOD)
-    context.use_privatekey_file('private.key')  # Private key file
-    context.use_certificate_file('certificate.crt')  # Certificate file
+    # Use the tuple format for SSL context (certificate file, private key)
+    ssl_context = ('certificate.crt', 'private.key')  # Files for HTTPS
 
-    app.run(host='0.0.0.0', port=443, ssl_context=context)
+    # Run the Flask app on port 443 with HTTPS
+    app.run(host='0.0.0.0', port=443, ssl_context=ssl_context)

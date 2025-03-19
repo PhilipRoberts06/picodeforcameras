@@ -1,0 +1,33 @@
+from flask import Flask, request, jsonify, Response
+from OpenSSL import SSL
+import requests
+
+app = Flask(__name__)
+
+@app.route('/api/<path:path>', methods=['GET', 'POST'])
+def forward_request(path):
+    local_server_url = f"http://127.0.0.1:8000/{path}"  # Local server URL
+    headers = {key: value for key, value in request.headers}
+
+    if request.method == 'GET':
+        response = requests.get(local_server_url, headers=headers, params=request.args, stream=True)
+    else:
+        response = requests.post(local_server_url, headers=headers, json=request.get_json(), stream=True)
+
+    # Handle image and JSON response types
+    content_type = response.headers.get('Content-Type', '')
+    if 'image' in content_type:
+        return Response(response.content, content_type=content_type)
+    else:
+        return jsonify(response.json()), response.status_code
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "running"}), 200
+
+if __name__ == '__main__':
+    context = SSL.Context(SSL.SSLv23_METHOD)
+    context.use_privatekey_file('private.key')  # Private key file
+    context.use_certificate_file('certificate.crt')  # Certificate file
+
+    app.run(host='0.0.0.0', port=443, ssl_context=context)

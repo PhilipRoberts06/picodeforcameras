@@ -1,0 +1,27 @@
+pip3 install requests --break-system-packages
+
+sudo mkdir -p /home/pi/WebServer/image
+
+mkdir -p /home/pi/WebServer/image
+
+Update your Python script to save the image in this directory:
+save_path = "/home/pi/WebServer/image/snap.jpeg"
+
+ls -ld /home/pi/webserver
+ls -ld /home/pi/webserver/image
+   it should look like         drwxr-xr-x 2 pi pi 4096 Mar 19 21:00 /home/pi/webserver
+                               drwxr-xr-x 2 pi pi 4096 Mar 19 21:00 /home/pi/webserver/image
+
+if not     sudo chown -R pi:pi /home/pi/webserver
+            chmod -R u+w /home/pi/webserver
+
+sudo python3 update_image.py
+
+
+now host on your webserver
+
+cd /home/pi/webserver
+
+python3 -m http.server 8080
+
+http://<your IP>:8080/image/snap.jpeg

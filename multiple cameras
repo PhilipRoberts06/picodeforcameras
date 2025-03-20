@@ -1,0 +1,37 @@
+import requests
+import time
+import os
+
+# List of camera URLs and save paths
+cameras = [
+    {"url": "http://aveiashq.mycrestron.com:22222/snap.jpeg", "path": "/home/webservers/cameras/camera002/snap.jpeg"},
+    {"url": "http://aveiashq.mycrestron.com:22225/snap.jpeg", "path": "/home/webservers/cameras/camera005/snap.jpeg"},
+    {"url": "http://aveiashq.mycrestron.com:22226/snap.jpeg", "path": "/home/webservers/cameras/camera006/snap.jpeg"},
+]
+
+def fetch_image(camera):
+    try:
+        response = requests.get(camera["url"], timeout=10)  # Fetch the image from the URL
+        if response.status_code == 200:
+            # Save the image to the specified path
+            with open(camera["path"], "wb") as file:
+                file.write(response.content)
+            print(f"Image updated for camera: {camera['url']}")
+        else:
+            print(f"Failed to update camera: {camera['url']}. Status code: {response.status_code}")
+    except Exception as e:
+        print(f"Error fetching camera: {camera['url']}. Error: {e}")
+
+def ensure_directories():
+    for camera in cameras:
+        folder = os.path.dirname(camera["path"])  # Extract the folder path
+        if not os.path.exists(folder):
+            os.makedirs(folder)  # Create missing directories
+            print(f"Created folder: {folder}")
+
+if __name__ == "__main__":
+    ensure_directories()  # Ensure all directories exist
+    while True:
+        for camera in cameras:
+            fetch_image(camera)
+        time.sleep(1)  # Fetch all camera feeds every 1 second

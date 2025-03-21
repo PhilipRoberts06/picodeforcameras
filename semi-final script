@@ -1,0 +1,191 @@
+import os
+import requests
+import time
+import json
+import shutil
+from http.server import HTTPServer, SimpleHTTPRequestHandler
+from base64 import b64encode
+
+# Global Constants
+USERNAME = "mycrestron"
+PASSWORD = "admin2025"
+LOG_DIR = "/home/webservers/logs"
+MAX_LOG_SIZE = 5 * 1024 * 1024 * 1024  # 5 GB
+
+# Function to handle log size
+def check_and_override_log(log_file):
+    if os.path.exists(log_file) and os.path.getsize(log_file) > MAX_LOG_SIZE:
+        # Override the log by truncating it
+        with open(log_file, "w") as file:
+            file.truncate(0)
+        print(f"Log file {log_file} has been overridden due to size exceeding 5 GB.")
+
+# Setup Logging
+def setup_logging():
+    if not os.path.exists(LOG_DIR):
+        os.makedirs(LOG_DIR)
+    log_file = os.path.join(LOG_DIR, "access.log")
+    # Check and override log if necessary
+    check_and_override_log(log_file)
+    return log_file
+
+def setup():
+    print("Raspberry Pi Camera Setup Wizard\n")
+
+    # Gather necessary configuration
+    local_ip = input("Enter the local IP address of this Raspberry Pi: ").strip()
+    port = input("Enter the port you want the web server to run on (default: 8080): ").strip() or "8080"
+
+    # Ask about the cameras
+    num_cameras = int(input("\nEnter the number of cameras to configure: "))
+    cameras = []
+
+    for i in range(1, num_cameras + 1):
+        print(f"\n--- Camera {i} Configuration ---")
+        camera_name = input(f"Enter a name for Camera {i} (e.g., Camera001): ").strip()
+        camera_url = input(f"Enter the URL for Camera {i} (e.g., http://192.168.1.10/snap.jpeg): ").strip()
+        camera_path = f"/home/webservers/cameras/{camera_name}/"  # Directory for this camera
+        cameras.append({
+            "name": camera_name,
+            "url": camera_url,
+            "path": camera_path
+        })
+
+    # Return the full configuration
+    return {
+        "local_ip": local_ip,
+        "port": port,
+        "cameras": cameras
+    }
+
+def generate_directories_and_index_html(cameras):
+    print("\nCreating necessary directories and deploying index.html...")
+    # Content of index.html
+    html_content = """<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="refresh" content="0; url=https://www.weather.com" />
+    <title>Redirecting...</title>
+</head>
+<body>
+    <p>If you are not redirected automatically, follow this <a href="https://www.weather.com">link to weather.com</a>.</p>
+</body>
+</html>
+"""
+
+    base_path = "/home/webservers/"
+    # Create index.html in the base path
+    index_path = os.path.join(base_path, "index.html")
+    if not os.path.exists(base_path):
+        os.makedirs(base_path)
+    with open(index_path, "w") as file:
+        file.write(html_content)
+    print(f"Deployed index.html to {base_path}")
+
+    # Deploy index.html to all subdirectories
+    for camera in cameras:
+        if not os.path.exists(camera["path"]):
+            os.makedirs(camera["path"])
+            print(f"Created folder: {camera['path']}")
+        shutil.copy(index_path, os.path.join(camera["path"], "index.html"))
+        print(f"Deployed index.html to {camera['path']}")
+
+def fetch_image(camera, log_file):
+    try:
+        # Parse the file name from the URL
+        file_name = camera["url"].split("/")[-1] or "default_image.jpeg"  # Fallback file name
+        save_path = os.path.join(camera["path"], file_name)
+
+        # Fetch the image
+        response = requests.get(camera["url"], timeout=10)
+        if response.status_code == 200:
+            with open(save_path, "wb") as file:
+                file.write(response.content)
+            with open(log_file, "a") as log:
+                log.write(f"{camera['name']}: Image updated successfully.\n")
+        else:
+            with open(log_file, "a") as log:
+                log.write(f"{camera['name']}: Failed to fetch image. Status code: {response.status_code}\n")
+    except Exception as e:
+        with open(log_file, "a") as log:
+            log.write(f"{camera['name']}: Error fetching image. {e}\n")
+    # Check and override log if necessary
+    check_and_override_log(log_file)
+
+def start_fetch_loop(cameras, log_file):
+    print("\nStarting to fetch images from cameras...")
+    while True:
+        for camera in cameras:
+            fetch_image(camera, log_file)
+        time.sleep(1)  # Adjust the interval as needed
+
+class CustomHandler(SimpleHTTPRequestHandler):
+    def do_GET(self):
+        # Protect the /log/ endpoint
+        if self.path.startswith("/logs/"):
+            auth_header = self.headers.get("Authorization")
+            if not auth_header or not self.authenticate(auth_header):
+                self.send_response(401)
+                self.send_header("WWW-Authenticate", 'Basic realm="Log Access"')
+                self.end_headers()
+                self.wfile.write(b"Authentication required.")
+                return
+
+        # Serve files normally
+        super().do_GET()
+
+    def list_directory(self, path):
+        """Override to disable directory listing."""
+        self.send_error(403, "Directory listing is forbidden")
+
+    def authenticate(self, auth_header):
+        """Basic Authentication"""
+        auth_type, encoded_credentials = auth_header.split(" ", 1)
+        if auth_type.lower() != "basic":
+            return False
+        credentials = b64encode(f"{USERNAME}:{PASSWORD}".encode()).decode()
+        return encoded_credentials == credentials
+
+def start_http_server(port):
+    print(f"\nStarting the web server on port {port}...")
+    os.chdir("/home/webservers")
+    httpd = HTTPServer(("", int(port)), CustomHandler)
+    httpd.serve_forever()
+
+if __name__ == "__main__":
+    # Setup log file
+    log_file = setup_logging()
+
+    # Run the setup wizard
+    config = setup()
+
+    # Display the summary
+    print("\n--- Configuration Summary ---")
+    print(f"Local IP: {config['local_ip']}")
+    print(f"Port: {config['port']}")
+    print("Configured Cameras:")
+    for cam in config["cameras"]:
+        print(f"  - {cam['name']} ({cam['url']} -> {cam['path']})")
+
+    # Generate directories and deploy index.html files
+    generate_directories_and_index_html(config["cameras"])
+
+    # Save the configuration to a JSON file for future reference
+    with open("/home/webservers/config.json", "w") as config_file:
+        json.dump(config, config_file, indent=4)
+    print("\nConfiguration saved to /home/webservers/config.json.")
+
+    # Ask if the user wants to start the server and fetch loop
+    start_server = input("\nDo you want to start the web server now? (yes/no): ").strip().lower() == "yes"
+    if start_server:
+        print("\nStarting web server and fetch loop...")
+
+        # Fetch images in the background and start the server
+        try:
+            from threading import Thread
+            Thread(target=start_fetch_loop, args=(config["cameras"], log_file), daemon=True).start()
+            start_http_server(config["port"])
+        except KeyboardInterrupt:
+            print("\nServer stopped. Goodbye!")
+    else:
+        print("\nSetup complete. You can start the server later.")

@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Script to set up Python HTTP Server as a service on Raspberry Pi
+
+echo "Starting setup for Python HTTP server..."
+
+# Step 1: Update and Install Python
+echo "Updating package lists..."
+sudo apt update -y
+
+echo "Installing Python3..."
+sudo apt install -y python3
+
+# Step 2: Create the Web Server Directory
+WEB_DIR="/home/webservers"
+if [ ! -d "$WEB_DIR" ]; then
+    echo "Creating web server directory at $WEB_DIR..."
+    sudo mkdir -p "$WEB_DIR"
+    sudo chmod -R 755 "$WEB_DIR"
+else
+    echo "Web server directory already exists at $WEB_DIR."
+fi
+
+# Step 3: Create a Systemd Service File
+SERVICE_FILE="/etc/systemd/system/python_server.service"
+echo "Creating systemd service file for Python HTTP server..."
+
+sudo bash -c "cat > $SERVICE_FILE" <<EOL
+[Unit]
+Description=Python HTTP Server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 -m http.server 8080 --directory $WEB_DIR
+WorkingDirectory=$WEB_DIR
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+# Step 4: Reload Systemd and Enable the Service
+echo "Reloading systemd daemon..."
+sudo systemctl daemon-reload
+
+echo "Enabling Python HTTP server to start on boot..."
+sudo systemctl enable python_server.service
+
+# Step 5: Start the Service
+echo "Starting the Python HTTP server..."
+sudo systemctl start python_server.service
+
+# Final Message
+echo "Setup complete! The Python HTTP server is now running."
+echo "You can access it by visiting http://<your-pi-ip>:8080 in your browser."
